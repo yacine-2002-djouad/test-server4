@@ -1,17 +1,29 @@
-const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
-wss.on('connection', function connection(ws) {
-    console.log('Client connected');
+import express from "express";
+import { WebSocketServer } from "ws";
 
-    ws.on('message', function incoming(message) {
-        console.log("Received:", message);
+const app = express();
 
-        // broadcast to all clients
-        wss.clients.forEach(function each(client) {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(message);
-            }
-        });
+// Render exposes a PORT environment variable
+const PORT = process.env.PORT || 3000;
+
+// Create HTTP server
+const server = app.listen(PORT, () => {
+    console.log("Server listening on port", PORT);
+});
+
+// Attach WebSocket server to HTTP server
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", (ws) => {
+    console.log("Client connected");
+
+    ws.on("message", (msg) => {
+        console.log("Received:", msg.toString());
+        ws.send("You said: " + msg);
+    });
+
+    ws.on("close", () => {
+        console.log("Client disconnected");
     });
 });
